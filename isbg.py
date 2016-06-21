@@ -553,6 +553,7 @@ h_tolearn, h_learnt = sa_learn_ham(opts, learnhambox, exitcodeimap,
 
 def filter_uids(opts, spaminbox, exitcodeimap, imapinbox, maxsize,
                 pastuidsfile, partialrun):
+    inboxuids = []
     if opts["--teachonly"] is False:
         # check spaminbox exists by examining it
         res = imap.select(spaminbox, 1)
