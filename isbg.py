@@ -590,7 +590,7 @@ try:
         # Take only X elements if partialrun is enabled
         if partialrun is not None:
             totaluids = len(uids)
-            uids = uids[:int(partialrun)]
+            uids = uids[int(partialrun)*-1:]
             global pendinguids
             pendinguids = totaluids - len(uids)
 
