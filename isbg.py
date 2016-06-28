@@ -45,7 +45,7 @@ Options:
                          copied to your spam folder
     --nostats            Don't print stats
     --partialrun num     Stop operation after scanning 'num' unseen emails
-    --passwdfilename     Use a file to supply the password
+    --passwdfilename f   Use a file to supply the password
     --savepw             Store the password to be used in future runs
     --spamc              Use spamc instead of standalone SpamAssassin binary
     --spaminbox mbox     Name of your spam folder
@@ -263,6 +263,9 @@ else:
 if opts["--trackfile"] is not None:
     pastuidsfile = opts["--trackfile"]
 
+if opts["--passwdfilename"] is not None:
+    passwdfilename = opts["--passwdfilename"]
+
 if opts["--partialrun"] is not None:
     partialrun = opts["--partialrun"]
     if partialrun < 1:
@@ -393,7 +396,7 @@ try:
                         print("Successfully read password file")
                 except:
                     pass
-                
+
             if imappasswd is None:
             # do we have to prompt?
                 if not interactive:
@@ -402,7 +405,7 @@ try:
 
                 imappasswd = getpass.getpass("IMAP password for %s@%s: "
                                         % (imapuser, imaphost))
-        
+
                 # Should we save it?
                 if opts["--savepw"] is True:
                     f = open(passwdfilename, "wb+")
@@ -572,21 +575,21 @@ try:
             # check spaminbox exists by examining it
             res = imap.select(spaminbox, 1)
             assertok(opts, exitcodeimap, res, 'select', spaminbox, 1)
-        
+
             # select inbox
             res = imap.select(imapinbox, 1)
             assertok(opts, exitcodeimap, res, 'select', imapinbox, 1)
-        
+
             # get the uids of all mails with a size less then the maxsize
             typ, inboxuids = imap.uid("SEARCH", None, "SMALLER", maxsize)
             inboxuids = inboxuids[0].split()
-        
+
         # remember what pastuids looked like so that we can compare at the end
         origpastuids = pastuids[:]
-        
+
         # filter away uids that was previously scanned
         uids = [u for u in inboxuids if u not in pastuids]
-        
+
         # Take only X elements if partialrun is enabled
         if partialrun is not None:
             totaluids = len(uids)
@@ -611,7 +614,7 @@ try:
         for u in uids:
             # Retrieve the entire message
             body = getmessage(opts, u, pastuids)
-      
+
             # Feed it to SpamAssassin in test mode
             p = Popen(satest, stdin=PIPE, stdout=PIPE, close_fds=True)
             try:
@@ -624,10 +627,10 @@ try:
                 continue
             if score == "0/0\n":
                 errorexit("spamc -> spamd error - aborting", exitcodespamc)
-      
+
             if opts["--verbose"] is True:
               print(u, "score:", score)
-      
+
             code = p.returncode
             if code == 0:
                 # Message is below threshold
@@ -636,12 +639,12 @@ try:
                 # Message is spam
                 if opts["--verbose"] is True:
                     print(u, "is spam")
-      
+
                 if (opts["--deletehigherthan"] is not None and
                     float(score.split('/')[0]) > deletehigherthan):
                     spamdeletelist.append(u)
                     continue
-      
+
                 # do we want to include the spam report
                 if noreport is False:
                     # filter it through sa
@@ -665,7 +668,7 @@ try:
                     # just copy it as is
                     res = imap.uid("COPY", u, spaminbox)
                     assertok(opts, exitcodeimap, res, "uid copy", u, spaminbox)
-      
+
                 spamlist.append(u)
 
         return pastuids, spamdeletelist, spamlist
@@ -717,7 +720,7 @@ try:
         if opts["--teachonly"] is False:
             # Now tidy up lists of uids
             newpastuids = list(set([u for u in pastuids if u in inboxuids]))
-        
+
             # only write out pastuids if it has changed
             if newpastuids != origpastuids:
                 f = open(pastuidsfile, "w+")
